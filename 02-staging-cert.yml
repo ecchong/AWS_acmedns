@@ -1,0 +1,20 @@
+---
+- hosts: "{{ run_hosts }}"
+  gather_facts: no
+
+  roles:
+    - role: snoord.acmedns
+      vars:
+        # LetsEncrypt
+        acmedns_le_email: ecchong@gmail.com
+        acmedns_le_cn: "automate.nyc"
+        # AWS Route53
+        acmedns_provider: r53
+        acmedns_r53_zone: automate.nyc
+        acmedns_r53_access_key: "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+        acmedns_r53_secret_key: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+# staging
+        acmedns_le_url: https://acme-staging-v02.api.letsencrypt.org/directory
+        acmedns_le_dir: "/home/echong/letsencrypt_staging"
+        acmedns_le_accountkey: "{{ acmedns_le_dir }}/letsencrypt.pem"
+...

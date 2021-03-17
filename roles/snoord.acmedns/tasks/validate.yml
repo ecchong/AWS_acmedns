@@ -1,0 +1,16 @@
+---
+- name: Validate the ACME DNS challenge
+  acme_certificate:
+    acme_version: 2
+    acme_directory: "{{ acmedns_le_url }}"
+    account_key_src: "{{ acmedns_le_accountkey }}"
+    src: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.csr"
+    cert: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.crt"
+    fullchain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.pem"
+    chain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}-intermediate.pem"
+    challenge: dns-01
+    remaining_days: 60
+    terms_agreed: true
+    data: "{{ lookup('file', challenge_data_file | from_json ) }}"
+  vars:
+    challenge_data_file: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.challenge_data.json"

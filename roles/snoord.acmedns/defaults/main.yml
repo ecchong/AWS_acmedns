@@ -1,0 +1,15 @@
+---
+acmedns_provider: ""
+acmedns_le_dir: "{{ lookup('env','HOME') }}/.local/share/letsencrypt"
+acmedns_le_accountkey: "{{ lookup('env','HOME') }}/.local/share/letsencrypt/letsencrypt.pem"
+acmedns_le_url: 'https://acme-v02.api.letsencrypt.org/directory'
+# acmedns_le_cn: 'example.com'
+# acmedns_le_sans:
+#   - '*.example.com'
+# acmedns_r53_zone: ""
+# acmedns_r53_access_key: ""
+# acmedns_r53_secret_key: ""
+# acmedns_cf_zone: ""
+# acmedns_cf_email: ""
+# acmedns_cf_token: ""
+...

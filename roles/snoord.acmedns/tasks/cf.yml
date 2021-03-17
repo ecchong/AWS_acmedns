@@ -1,0 +1,45 @@
+---
+- name: Create the Cloudflare DNS TXT record
+  cloudflare_dns:
+    domain: "{{ acmedns_cf_zone }}"
+    record: "{{ _acmedns_challenge.challenge_data[item]['dns-01']['record'] }}"
+    type: TXT
+    value: "{{ _acmedns_challenge.challenge_data[item]['dns-01']['resource_value'] }}"
+    account_email: "{{ acmedns_cf_email }}"
+    account_api_token: "{{ acmedns_cf_token }}"
+    state: present
+  with_items:
+    - "{{ acmedns_le_cn }}"
+    - "*.{{ acmedns_le_cn }}"
+
+- name: Wait
+  wait_for:
+    timeout: 30
+  when: _acmedns_challenge is changed
+
+- name: Validate the ACME DNS challenge
+  acme_certificate:
+    acme_version: 2
+    acme_directory: "{{ acmedns_le_url }}"
+    account_key_src: "{{ acmedns_le_accountkey }}"
+    src: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.csr"
+    cert: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.crt"
+    fullchain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.pem"
+    chain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}-intermediate.pem"
+    challenge: dns-01
+    remaining_days: 60
+    terms_agreed: true
+    data: "{{ _acmedns_challenge }}"
+
+- name: Delete the Cloudflare DNS TXT record
+  cloudflare_dns:
+    domain: "{{ acmedns_cf_zone }}"
+    record: "{{ _acmedns_challenge.challenge_data[item]['dns-01']['record'] }}"
+    type: TXT
+    account_email: "{{ acmedns_cf_email }}"
+    account_api_token: "{{ acmedns_cf_token }}"
+    state: absent
+  with_items:
+    - "{{ acmedns_le_cn }}"
+    - "*.{{ acmedns_le_cn }}"
+...

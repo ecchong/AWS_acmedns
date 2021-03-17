@@ -1,0 +1,85 @@
+---
+- debug:
+    msg: "{{ lookup('env','HOME') }}"
+
+- name: Ensure cert directory exists
+  file:
+    path: "{{ acmedns_le_dir }}"
+    state: directory
+    mode: '0700'
+
+- name: Check if the LetsEncrypt account key exists
+  stat:
+    path: "{{ acmedns_le_accountkey }}"
+  register: _acmedns_le_accountkey
+
+- name: "Check if a signing key for {{ acmedns_le_cn }} exists"
+  stat:
+    path: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.key"
+  register: _acmedns_le_sign
+
+- name: "Check if a CSR for {{ acmedns_le_cn }} exists"
+  stat:
+    path: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.csr"
+  register: _acmedns_le_csr
+
+- name: Generate the LetsEncrypt account key if it doesn't exist
+  openssl_privatekey:
+    path: "{{ acmedns_le_accountkey }}"
+    size: 2048
+  when:
+    - _acmedns_le_accountkey.stat.exists is defined
+    - not _acmedns_le_accountkey.stat.exists
+
+- name: "Generate the signing key for {{ acmedns_le_cn }} if it doesn't exist"
+  openssl_privatekey:
+    path: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.key"
+    size: 2048
+  when:
+    - _acmedns_le_sign.stat.exists is defined
+    - not _acmedns_le_sign.stat.exists
+
+- name: "Generate the CSR for {{ acmedns_le_cn }} if it doesn't exist"
+  openssl_csr:
+    path: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.csr"
+    privatekey_path: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.key"
+    email_address: "{{ acmedns_le_email }}"
+    common_name: "{{ acmedns_le_cn }}"
+    subject_alt_name: "DNS:*.{{ acmedns_le_cn }}"
+#    subject_alt_name: "DNS:www.{{ acmedns_le_cn }},DNS:dummy.{{ acmedns_le_cn }},DNS:xyz.{{ acmedns_le_cn }}"
+  when:
+    - _acmedns_le_csr.stat.exists is defined
+    - not _acmedns_le_csr.stat.exists
+
+- name: Create the ACME DNS challenge
+  acme_certificate:
+    acme_version: 2
+    acme_directory: "{{ acmedns_le_url }}"
+    account_key_src: "{{ acmedns_le_accountkey }}"
+    src: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.csr"
+    cert: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.crt"
+    fullchain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.pem"
+    chain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}-intermediate.pem"
+    challenge: dns-01
+    remaining_days: 60
+    terms_agreed: true
+  register: _acmedns_challenge
+
+- name: "Include tasks for creating and validating a {{ acmedns_provider }} TXT record"
+  include_tasks: "{{ acmedns_provider }}.yml"
+  when:
+  - _acmedns_challenge is changed
+  - not ( acmedns_manual_route53 | default(false) )
+
+- name: When need to create Route53 TXT record manually
+  block:
+  when: acmedns_manual_route53
+  - name: Save challenge data to file
+    copy:
+      dest: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.challenge_data.json"
+      content: "{{ _acmedns_challenge }}"
+
+  - name: Display DNS challenge
+    debug:
+      msg: "Create this Route53 TXT records manually:  {{ _acmedns_challenge.challenge_data_dns }}"
+...

@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: no
+
+  tasks:
+  - name: account info
+    acme_account_info:
+      account_key_src: "{{ lookup('env','HOME') }}/.local/share/letsencrypt/letsencrypt.pem"
+      acme_version: 2
+#      acme_directory: https://acme-v02.api.letsencrypt.org/directory
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+    register: account_data

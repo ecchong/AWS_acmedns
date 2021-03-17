@@ -1,0 +1,55 @@
+---
+- name: Create the Route53 DNS TXT record
+  route53:
+    command: create
+    zone: "{{ acmedns_r53_zone }}"
+#    record: "{{ _acmedns_challenge.challenge_data[item]['dns-01']['record'] }}"
+    type: TXT
+    ttl: 5
+#    value: "{{ _acmedns_challenge.challenge_data[item]['dns-01']['resource_value'] | regex_replace('^(.*)$', '\"\\1\"') }}"
+    aws_access_key: "{{ acmedns_r53_access_key }}"
+    aws_secret_key: "{{ acmedns_r53_secret_key }}"
+    overwrite: yes
+    wait: yes
+#  with_items:
+#    - "{{ acmedns_le_cn }}"
+#    - "*.{{ acmedns_le_cn }}"
+    record: "{{ item.key }}"
+    value: "{{ item.value | map('regex_replace', '^(.*)$', '\"\\1\"') | list }}"
+  loop: "{{ _acmedns_challenge.challenge_data_dns | dict2items }}"
+
+- name: Wait
+  wait_for:
+    timeout: 30
+
+- name: Validate the ACME DNS challenge
+  acme_certificate:
+    acme_version: 2
+    acme_directory: "{{ acmedns_le_url }}"
+    account_key_src: "{{ acmedns_le_accountkey }}"
+    src: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.csr"
+    cert: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.crt"
+    fullchain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.pem"
+    chain: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}-intermediate.pem"
+    challenge: dns-01
+    remaining_days: 60
+    terms_agreed: true
+    data: "{{ _acmedns_challenge }}"
+
+- name: Delete the Route53 DNS TXT record
+  route53:
+    command: delete
+    zone: "{{ acmedns_r53_zone }}"
+#    record: "{{ _acmedns_challenge.challenge_data[item]['dns-01']['record'] }}"
+    type: TXT
+    ttl: 5
+#    value: "{{ _acmedns_challenge.challenge_data[item]['dns-01']['resource_value'] | regex_replace('^(.*)$', '\"\\1\"') }}"
+    aws_access_key: "{{ acmedns_r53_access_key }}"
+    aws_secret_key: "{{ acmedns_r53_secret_key }}"
+#  with_items:
+#    - "{{ acmedns_le_cn }}"
+#    - "*.{{ acmedns_le_cn }}"
+    record: "{{ item.key }}"
+    value: "{{ item.value | map('regex_replace', '^(.*)$', '\"\\1\"') | list }}"
+  loop: "{{ _acmedns_challenge.challenge_data_dns | dict2items }}"
+...
