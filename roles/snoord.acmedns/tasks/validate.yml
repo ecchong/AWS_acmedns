@@ -6,7 +6,7 @@
 
 - name: Read challenge data from file
   set_fact:
-    challenge_data: "{{ challenge_data_file.content | from_json }}"
+    challenge_data: "{{ challenge_data_file.content | b64decode | from_json }}"
 
 - name: Validate the ACME DNS challenge
   acme_certificate:
