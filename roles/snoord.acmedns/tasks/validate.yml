@@ -5,7 +5,7 @@
 
 - name: Read challenge data from file
   set_fact:
-    challenge_data: "{{ lookup('file', challenge_data_file)| from_json }}"
+    challenge_data: "{{ lookup('file', '/home/echong/letsencrypt_staging/automate.nyc.challenge_data.json')| from_json }}"
 
 - name: Validate the ACME DNS challenge
   acme_certificate:
