@@ -72,8 +72,8 @@
   - not ( acmedns_manual_route53 | default(false) )
 
 - name: When need to create Route53 TXT record manually
-  block:
   when: acmedns_manual_route53
+  block:
   - name: Save challenge data to file
     copy:
       dest: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.challenge_data.json"
