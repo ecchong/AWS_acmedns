@@ -1,4 +1,7 @@
 ---
+- debug:
+    msg: "{{ lookup('file', challenge_data_file | from_json ) }}"
+  
 - name: Validate the ACME DNS challenge
   acme_certificate:
     acme_version: 2
