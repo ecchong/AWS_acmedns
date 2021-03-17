@@ -72,7 +72,9 @@
   - not ( acmedns_manual_route53 | default(false) )
 
 - name: When need to create Route53 TXT record manually
-  when: acmedns_manual_route53 | default(false)
+  when:
+  - _acmedns_challenge is changed
+  - acmedns_manual_route53 | default(false)
   block:
   - name: Save challenge data to file
     copy:
