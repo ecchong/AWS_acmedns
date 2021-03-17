@@ -3,9 +3,6 @@
   set_fact:
     challenge_data_file: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.challenge_data.json"
 
-- debug:
-    msg: "{{ lookup('file', challenge_data_file) | from_json }}"
-  
 - name: Validate the ACME DNS challenge
   acme_certificate:
     acme_version: 2
