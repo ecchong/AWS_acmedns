@@ -1,11 +1,12 @@
 ---
 - name: Store challenge data file location
-  set_fact:
-    challenge_data_file: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.challenge_data.json"
+  slurp:
+    src: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.challenge_data.json"
+  register: challenge_data_file
 
 - name: Read challenge data from file
   set_fact:
-    challenge_data: "{{ lookup('file', '/home/echong/letsencrypt_staging/automate.nyc.challenge_data.json')| from_json }}"
+    challenge_data: "{{ challenge_data_file.content | from_json }}"
 
 - name: Validate the ACME DNS challenge
   acme_certificate:
