@@ -3,6 +3,10 @@
   set_fact:
     challenge_data_file: "{{ acmedns_le_dir }}/{{ acmedns_le_cn }}.challenge_data.json"
 
+- name: Read challenge data from file
+  set_fact:
+    challenge_data: "{{ lookup('file', challenge_data_file)| from_json }}"
+
 - name: Validate the ACME DNS challenge
   acme_certificate:
     acme_version: 2
@@ -15,4 +19,4 @@
     challenge: dns-01
     remaining_days: 60
     terms_agreed: true
-    data: "{{ lookup('file', challenge_data_file)| from_json }}"
+    data: "{{ challenge_data }}"
